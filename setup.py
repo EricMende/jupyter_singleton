@@ -13,6 +13,7 @@ setup(
     python_requires=">=3.6",
     description='jupyter notebook wrapper for making output cells available outside of notebook',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Topic :: Utilities",
