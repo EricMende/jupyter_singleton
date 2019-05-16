@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" width="100%" height="100%">
+<head>
+    <meta charset="UTF-8">
+    <title>jupyter singleton</title>
+    <style>
+        html {
+            height: 100%;
+        }
+        body {
+            height: 100%;
+        }
+        #frameDiv {
+            height: 100%;
+        }
+        .notebookNotReady {
+            display:none;
+        }
+        .notebookReady {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+
+</head>
+<body>
+<div id="frameDiv">
+    <iframe src="http://localhost:8888/notebooks/{{ path }}" class="notebookNotReady" id="myFrame" name="iframe_test"></iframe>
+
+    <script type="text/javascript">
+
+    function handle_jupyter_start(){
+        var url_string = window.location.href;
+        var url = new URL(url_string);
+        var singleton_id = url.searchParams.get("singletonid");
+
+        var notebook = document.getElementById("myFrame").contentWindow.Jupyter.notebook;
+        var new_cell = notebook.insert_cell_at_index("code", 0);
+        notebook.delete_cell(1);
+
+        var myFrame = document.getElementById("myFrame");
+        var doc = myFrame.contentDocument?myFrame.contentDocument:myFrame.contentWindow.document;
+        doc.getElementById("header").setAttribute("style", "display: none;");
+        var notebook_container = doc.getElementById("notebook-container");
+        notebook_container.setAttribute("style", "width: 100%;");
+        var input_div = notebook_container.getElementsByClassName("input")[0];
+        input_div.setAttribute("style", "display: none;")
+        //notebook_container.getElementsByClassName("output_prompt")[0].setAttribute("style", "display: none;");
+
+        // TODO I am not sure what I am waiting here for.
+        //      When I execute the cell too early the output cell does not register further messages from python
+        //      However, if I knew what situation causes js to register the messages I could check/poll for that
+        //      situation to happen and then continue asap instead of waiting so long and cross fingers everything is
+        //      ok.
+        setTimeout(function(){
+            new_cell.set_text("from jupyter_singleton.launcher import JupyterSingleton\nJupyterSingleton.singleton_ids.append('"+singleton_id+"')");
+            new_cell.execute();
+
+            notebook.set_autosave_interval(0); //disable autosave
+            notebook.save_notebook = function(dummy){console.log("saving is disabled");} //disable saving
+
+            var frame = document.getElementById("myFrame");
+            frame.classList.add("notebookReady")
+            frame.classList.remove("notebookNotReady")
+        }, 500);
+    }
+
+    function poll_for_jupyter_start(){
+        var notebook = document.getElementById("myFrame").contentWindow.Jupyter.notebook;
+        if(notebook && notebook._fully_loaded){
+            handle_jupyter_start();
+        }else{
+            setTimeout(poll_for_jupyter_start, 50);
+        }
+    }
+
+    window.onload = function(){
+        poll_for_jupyter_start();
+    }
+    </script>
+</div>
+</body>
+</html>
