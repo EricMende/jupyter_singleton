@@ -20,8 +20,15 @@ class JupyterSingleton:
         self.browser_name = browser_name
 
     def _start_callback(self):
-        # TODO probably we should do some polling here until we know it is save to import ipywidgets and use display in
-        #  the callback
+        # poll until jupyter client ready
+        started = False
+        for _ in range(6000):
+            if JupyterSingleton.client_started:
+                started = True
+                break
+            time.sleep(0.1)
+        if not started:
+            raise IOError('client did not seem to start ... timed out')
 
         # TODO we should make sure that when errors occur in callback, they get printed to the consol
         self.callback(self.open_singleton)
@@ -95,13 +102,17 @@ class JupyterSingleton:
         kernel_info = self._poll_and_read_kernel_info()
 
         if kernel_info:
+            JupyterSingleton.client_started = False
+            
             # start user callback
             threading.Thread(target=self._start_callback).start()
 
             # launch the actual jupyter client programm
             kernel_id = kernel_info['kernel_id']
             kernel_file = 'kernel-' + kernel_id + '.json'
-            kernelapp.launch_new_instance(connection_file=kernel_file)
+            code_to_run = 'from jupyter_singleton.launcher import JupyterSingleton\n' + \
+                          'JupyterSingleton.client_started=True'
+            kernelapp.launch_new_instance(connection_file=kernel_file, code_to_run=code_to_run)
         else:
             raise IOError('kernel connection file was not written before timeout')
 
