@@ -23,6 +23,7 @@ setup(
     ],
     install_requires=[
         'notebook >= 5.7.8',
+        'jupyter_nbextensions_configurator >= 0.4.1',
     ],
     include_package_data=True
 )

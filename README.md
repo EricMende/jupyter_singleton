@@ -33,6 +33,7 @@ if __name__ == '__main__':
 ## Dependency
 
 - `notebook` (version >= 5.7.8)
+- `jupyter_nbextensions_configurator` (version >= 0.4.1)
 
 ## Installation
 
