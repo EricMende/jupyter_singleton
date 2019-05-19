@@ -23,9 +23,6 @@ class JupyterSingleton:
         # TODO probably we should do some polling here until we know it is save to import ipywidgets and use display in
         #  the callback
 
-        # TODO this should be called after we are sure the jupyterkernel has started:
-        #  sys.argv = argv
-
         # TODO we should make sure that when errors occur in callback, they get printed to the consol
         self.callback(self.open_singleton)
 
@@ -104,9 +101,7 @@ class JupyterSingleton:
             # launch the actual jupyter client programm
             kernel_id = kernel_info['kernel_id']
             kernel_file = 'kernel-' + kernel_id + '.json'
-            argv = sys.argv
-            sys.argv = [argv[0], '-f', kernel_file]
-            kernelapp.launch_new_instance()
+            kernelapp.launch_new_instance(connection_file=kernel_file)
         else:
             raise IOError('kernel connection file was not written before timeout')
 
