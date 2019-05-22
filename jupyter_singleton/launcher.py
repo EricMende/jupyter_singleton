@@ -137,7 +137,8 @@ def launch(callback, browser_name=None, server_parameters=None):
     :param callback: function to be called when jupyter connection is made (Note that this 'launch' function does not
                      return)
     :param browser_name: name of the browser to be used when displaying the singleton output cell
-    :param server_params parameters to forward to the main function of the jupyter server. See  notebook.notebookapp.main.
+    :param server_parameters parameters to forward to the main function of the jupyter server. See
+           notebook.notebookapp.main.
     :return:
     """
     sd = JupyterSingleton(callback, browser_name=browser_name)
