@@ -84,16 +84,20 @@ class JupyterSingleton:
             time.sleep(0.1)
         return None
 
-    def launch_server(self, additional_argv=None):
+    def launch_server(self, server_parameters=None):
+
+        if server_parameters is None:
+            server_parameters = dict()
+        parameter_path = os.path.join(self.notebook_dir, 'parameters.json')
+        with open(parameter_path, 'w') as parameter_fd:
+            json.dump(server_parameters, parameter_fd)
+
         # start server
         cmd = [
             sys.executable,
             '-m', 'jupyter_singleton.serverlauncher',
             '--notebook-dir', self.notebook_dir,
-            '--no-browser'
         ]
-        if additional_argv is not None:
-            cmd += additional_argv
         env = os.environ.copy()
         env.pop('PYTHONEXECUTABLE', None)
         launch_kernel(cmd, env=env)  # this function originally starts a kernel but can also be used to start the server
@@ -117,7 +121,7 @@ class JupyterSingleton:
             raise IOError('kernel connection file was not written before timeout')
 
 
-def launch(callback, browser_name=None, additional_argv=None):
+def launch(callback, browser_name=None, server_parameters=None):
     """
     This function launches both sides of a jupyter connection.
     First it launches an instance of a jupyter server in a subprocess.
@@ -133,8 +137,8 @@ def launch(callback, browser_name=None, additional_argv=None):
     :param callback: function to be called when jupyter connection is made (Note that this 'launch' function does not
                      return)
     :param browser_name: name of the browser to be used when displaying the singleton output cell
-    :param additional_argv: additional arguments to use when starting jupyter server
+    :param server_params parameters to forward to the main function of the jupyter server. See  notebook.notebookapp.main.
     :return:
     """
     sd = JupyterSingleton(callback, browser_name=browser_name)
-    sd.launch_server(additional_argv=additional_argv)
+    sd.launch_server(server_parameters)
