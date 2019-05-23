@@ -5,7 +5,9 @@ import time
 import threading
 import urllib
 
-from notebook.notebookapp import main
+from jupyter_singleton import singletonkernelmanager
+
+from notebook.notebookapp import NotebookApp
 
 
 def start_kernel_connection(server_info_file):
@@ -65,16 +67,25 @@ if __name__ == '__main__':
     # set further parameters
     info_file = os.path.join(notebook_dir, 'server_info.json')
     connection_file = os.path.join(notebook_dir, 'connection_file.json')
-    kernel_manager_class = 'jupyter_singleton.singletonkernelmanager.SingletonKernelManager'
     _set_parameter_if_absent(parameters, 'extra_services', ['jupyter_singleton.handlers'])
     _set_parameter_if_absent(parameters, 'info_file', info_file)
     _set_parameter_if_absent(parameters, 'connection_file', connection_file)
     _set_parameter_if_absent(parameters, 'connection_dir', notebook_dir)
-    _set_parameter_if_absent(parameters, 'kernel_manager_class', kernel_manager_class)
     _set_parameter_if_absent(parameters, 'open_browser', False)
+    _set_parameter_if_absent(parameters, 'notebook_dir', notebook_dir)
 
-    # start kernel connector
+    # start kernel connector, telling the server to connect to **the** client immediately after start
     threading.Thread(target=start_kernel_connection, args=(info_file, )).start()
 
-    # start jupyter server
-    sys.exit(main(**parameters))
+    # wrap the kernel manager
+    notebook_app = NotebookApp(**parameters)
+    singleton_kernel_manager_class = singletonkernelmanager.get_class(notebook_app.kernel_manager_class)
+    notebook_app.kernel_manager_class = singleton_kernel_manager_class
+
+    # start the jupyter server
+    notebook_app.initialize(argv=[])
+    notebook_app.start()
+
+
+
+
