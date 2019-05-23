@@ -116,7 +116,12 @@ class JupyterSingleton:
             kernel_file = 'kernel-' + kernel_id + '.json'
             code_to_run = 'from jupyter_singleton.launcher import JupyterSingleton\n' + \
                           'JupyterSingleton.client_started=True'
-            kernelapp.launch_new_instance(connection_file=kernel_file, code_to_run=code_to_run)
+
+            kernelapp.launch_new_instance(
+                connection_file=kernel_file,
+                code_to_run=code_to_run,
+                quiet=False
+            )
         else:
             raise IOError('kernel connection file was not written before timeout')
 
