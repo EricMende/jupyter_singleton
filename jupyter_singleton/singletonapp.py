@@ -10,28 +10,16 @@ import webbrowser
 from ipykernel import kernelapp
 from jupyter_client.launcher import launch_kernel
 
+from tornado.platform.asyncio import AsyncIOLoop
 
-class JupyterSingleton:
-    def __init__(self, callback, browser_name=None):
-        JupyterSingleton.singleton_ids = []
+
+class SingletonApp:
+    def __init__(self, browser_name=None):
+        SingletonApp.singleton_ids = []
+        SingletonApp.client_started = False
 
         self.notebook_dir = tempfile.mkdtemp(prefix='jupyter_singleton_')
-        self.callback = callback
         self.browser_name = browser_name
-
-    def _start_callback(self):
-        # poll until jupyter client ready
-        started = False
-        for _ in range(6000):
-            if JupyterSingleton.client_started:
-                started = True
-                break
-            time.sleep(0.1)
-        if not started:
-            raise IOError('client did not seem to start ... timed out')
-
-        # TODO we should make sure that when errors occur in callback, they get printed to the consol
-        self.callback(self.open_singleton)
 
     def open_singleton(self):
         """
@@ -64,7 +52,7 @@ class JupyterSingleton:
         # poll until output-cell active
         started = False
         for _ in range(6000):
-            if singleton_id in JupyterSingleton.singleton_ids:
+            if singleton_id in SingletonApp.singleton_ids:
                 started = True
                 break
             time.sleep(0.1)
@@ -84,8 +72,7 @@ class JupyterSingleton:
             time.sleep(0.1)
         return None
 
-    def launch_server(self, server_parameters=None):
-
+    def _launch_server(self, server_parameters=None):
         if server_parameters is None:
             server_parameters = dict()
         parameter_path = os.path.join(self.notebook_dir, 'parameters.json')
@@ -105,46 +92,46 @@ class JupyterSingleton:
         # poll for the connection file to be written by server
         kernel_info = self._poll_and_read_kernel_info()
 
+        return kernel_info
+
+    def _launch_client(self, kernel_id):
+        # we have to create the event-loop explicitly here since IOLoop.current() is prohibited outside of the main
+        # thread
+        AsyncIOLoop(make_current=True)
+
+        # prepare parameters
+        kernel_file = 'kernel-' + kernel_id + '.json'
+        code_to_run = 'from jupyter_singleton.singletonapp import SingletonApp\n' + \
+                      'SingletonApp.client_started=True'
+
+        # start jupyter client
+        kernelapp.launch_new_instance(
+            connection_file=kernel_file,
+            code_to_run=code_to_run,
+            quiet=False
+        )
+
+    def _launch(self, server_parameters):
+        kernel_info = self._launch_server(server_parameters)
         if kernel_info:
-            JupyterSingleton.client_started = False
-            
+            # JupyterSingleton.client_started = False
+
             # start user callback
-            threading.Thread(target=self._start_callback).start()
+            # threading.Thread(target=self._start_callback).start()
 
-            # launch the actual jupyter client programm
-            kernel_id = kernel_info['kernel_id']
-            kernel_file = 'kernel-' + kernel_id + '.json'
-            code_to_run = 'from jupyter_singleton.launcher import JupyterSingleton\n' + \
-                          'JupyterSingleton.client_started=True'
-
-            kernelapp.launch_new_instance(
-                connection_file=kernel_file,
-                code_to_run=code_to_run,
-                quiet=False
-            )
+            threading.Thread(target=self._launch_client, args=(kernel_info['kernel_id'],)).start()
+            # self._launch_client(kernel_info['kernel_id'])
         else:
             raise IOError('kernel connection file was not written before timeout')
 
-
-def launch(callback, browser_name=None, server_parameters=None):
-    """
-    This function launches both sides of a jupyter connection.
-    First it launches an instance of a jupyter server in a subprocess.
-    Then it also starts a jupyter client in the current thread and lets it connect to the server.
-    However, before actually launching the client, this function calls the given callback in a new thread.
-    The callback will be given a function that can be used to start a browser window with a singleton jupyter output
-    cell. The remaining code in the callback will then be executed as if it where executed in the actual notebook
-    itself. This means that output printed via 'print' or displayed via 'IPython.display.display' will be shown in the
-    output cell.
-
-    NOTE: This function does not return unless the jupyter_client gets killed!
-
-    :param callback: function to be called when jupyter connection is made (Note that this 'launch' function does not
-                     return)
-    :param browser_name: name of the browser to be used when displaying the singleton output cell
-    :param server_parameters parameters to forward to the main function of the jupyter server. See
-           notebook.notebookapp.main.
-    :return:
-    """
-    sd = JupyterSingleton(callback, browser_name=browser_name)
-    sd.launch_server(server_parameters)
+    def launch(self, server_parameters):
+        """
+        Launches the jupyter server and afterwards the jupyter client in a new thread
+        The server will be launched in a new subprocess while the client will be launched in a new thread in the current
+        process.
+        NOTE: this function returns immediately. It does NOT block until jupyter server and jupyter client are ready to
+              display something
+        :param server_parameters: parameters to pass to the jupyter server
+        :return:
+        """
+        threading.Thread(target=self._launch, args=(server_parameters,)).start()

@@ -53,7 +53,7 @@
         //      situation to happen and then continue asap instead of waiting so long and cross fingers everything is
         //      ok.
         setTimeout(function(){
-            new_cell.set_text("from jupyter_singleton.launcher import JupyterSingleton\nJupyterSingleton.singleton_ids.append('"+singleton_id+"')");
+            new_cell.set_text("from jupyter_singleton.singletonapp import SingletonApp\nSingletonApp.singleton_ids.append('"+singleton_id+"')");
             new_cell.execute();
 
             notebook.set_autosave_interval(0); //disable autosave

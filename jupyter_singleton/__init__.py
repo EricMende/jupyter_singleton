@@ -1,0 +1,2 @@
+singleton_app = None
+
