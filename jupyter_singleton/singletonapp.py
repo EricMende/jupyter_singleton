@@ -7,13 +7,19 @@ import threading
 import uuid
 import webbrowser
 
-from ipykernel import kernelapp
+from IPython.core.interactiveshell import InteractiveShell
+from ipykernel.kernelapp import IPKernelApp
 from jupyter_client.launcher import launch_kernel
+from jupyter_singleton.displaydatahook import DisplayDataHook
 
 from tornado.platform.asyncio import AsyncIOLoop
 
 
 class SingletonApp:
+
+    kernel_app = None
+    display_data_hook = DisplayDataHook()
+
     def __init__(self, browser_name=None):
         SingletonApp.singleton_ids = []
         SingletonApp.client_started = False
@@ -31,6 +37,13 @@ class SingletonApp:
 
         :return:
         """
+
+        # first register displayhook, so that the correct message parent is set in messages send to the browser
+        thread_local_data = threading.local()
+        if not hasattr(thread_local_data, 'has_displayhook') or not thread_local_data.has_displayhook:
+            InteractiveShell.instance().display_pub.register_hook(self.display_data_hook)
+            thread_local_data.has_displayhook = True
+
         server_info_path = os.path.join(self.notebook_dir, 'server_info.json')
         with open(server_info_path, "r") as f:
             server_info = json.load(f)
@@ -103,24 +116,26 @@ class SingletonApp:
         kernel_file = 'kernel-' + kernel_id + '.json'
         code_to_run = 'from jupyter_singleton.singletonapp import SingletonApp\n' + \
                       'SingletonApp.client_started=True'
+        kernel_class = 'jupyter_singleton.singletonipkernel.SingletonIPythonKernel'
+
+        parameters = {
+            'connection_file': kernel_file,
+            'code_to_run': code_to_run,
+            'quiet': False,
+            'kernel_class': kernel_class
+        }
 
         # start jupyter client
-        kernelapp.launch_new_instance(
-            connection_file=kernel_file,
-            code_to_run=code_to_run,
-            quiet=False
-        )
+        self.kernel_app = IPKernelApp(**parameters)
+        self.kernel_app.initialize([])
+        if hasattr(self.kernel_app.kernel, 'set_displaydatahook'):
+            self.kernel_app.kernel.set_displaydatahook(self.display_data_hook)
+        self.kernel_app.start()
 
     def _launch(self, server_parameters):
         kernel_info = self._launch_server(server_parameters)
         if kernel_info:
-            # JupyterSingleton.client_started = False
-
-            # start user callback
-            # threading.Thread(target=self._start_callback).start()
-
             threading.Thread(target=self._launch_client, args=(kernel_info['kernel_id'],)).start()
-            # self._launch_client(kernel_info['kernel_id'])
         else:
             raise IOError('kernel connection file was not written before timeout')
 
