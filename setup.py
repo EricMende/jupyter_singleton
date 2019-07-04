@@ -25,7 +25,7 @@ setup(
         'ipykernel >= 5.1.1',
         'IPython >= 7.5.0',
         'jinja2 >= 2.10.1',
-        'jupyter_client >= 5.2.4'
+        'jupyter_client >= 5.2.4',
         'jupyter_nbextensions_configurator >= 0.4.1',
         'notebook >= 5.7.8',
         'tornado >= 6.0.2',
