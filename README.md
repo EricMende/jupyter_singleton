@@ -6,27 +6,35 @@ jupyter-singleton is a wrapper for the jupyter notebook that allows using output
 
 ## Usage
 
+### Example 1
+
+You can use the jupyter-singleton `display` function similar to the IPython `display` function. However, here the result will be shown in a new browser window.
+
 ```
-import ipywidgets as widgets
+from ipywidgets import Label
+from jupyter_singleton.direct import display
 
+display(Label('I will be displayed in a browser window'))
+display(Label('I will be displayed in another browser window'))
+```
+
+### Example 2
+
+You can also use jupyter-singletons `open_singleton` function to activate a jupyter output-cell in a new browser window. Than you can use the traditional IPython `display` function to show your widgets, as well as ipywidgets `interact` function.
+
+```
 from IPython.display import display
-from jupyter_singleton.launcher import launch
+from ipywidgets import interact, Label
+from jupyter_singleton.direct import open_singleton
 
 
-def test_fun(open_singleton):
-    open_singleton()
-    print('this will be shown in browser window')
-    label = widgets.Label(value='this too')
-    display(label)
-
-    open_singleton()
-    print('this will be shown in another browser window')
+def f(x):
+    return x
 
 
-if __name__ == '__main__':
-    launch(test_fun)
-
-    # this will never be reached unless jupyter client gets killed
+open_singleton()
+interact(f, x=10)
+display(Label('I will be displayed in the same browser window as the interact-slider'))
 
 ```
 
