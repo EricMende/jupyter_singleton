@@ -1,8 +1,10 @@
 # jupyter-singleton
 
+
 ## Introduction
 
 jupyter-singleton is a wrapper for the jupyter notebook that allows using output cells from outside of the `jupyter notebook` environment. Thus it enables you to use `ipywidgets` and *Grammar of Graphics* packages whilst programming in your favorite IDE.
+
 
 ## Usage
 
@@ -38,16 +40,24 @@ display(Label('I will be displayed in the same browser window as the interact-sl
 
 ```
 
-## Dependency
 
-- `notebook` (version >= 5.7.8)
+## Dependencies
+
+- `ipykernel` (version >= 5.1.1)
+- `IPython` (version >= 7.5.0)
+- `jinja2` (version >= 2.10.1)
+- `jupyter_client` (version >= 5.2.4)
 - `jupyter_nbextensions_configurator` (version >= 0.4.1)
+- `notebook` (version >= 5.7.8)
+- `tornado` (version >= 6.0.2)
+
 
 ## Installation
 
 ```
 $ pip install jupyter-singleton
 ```
+
 
 ## License
 
