@@ -58,10 +58,44 @@
 
     }
 
+    function check_jupyter_started(){
+        var frame = document.getElementById("myFrame");
+
+        if(typeof(frame.contentWindow) === 'undefined' || frame.contentWindow === null){
+            return false;
+        }
+        frame = frame.contentWindow;
+
+        if(typeof(frame.Jupyter) === 'undefined' ||
+           frame.Jupyter === null ||
+           typeof(frame.Jupyter.notebook) === 'undefined' ||
+           frame.Jupyter.notebook === null){
+
+            return false;
+        }
+        var notebook = frame.Jupyter.notebook;
+
+        if(!notebook._fully_loaded ||
+           typeof(notebook.kernel) === 'undefined' ||
+           notebook.kernel === null ||
+           typeof(notebook.kernel.widget_manager) === 'undefined' ||
+           notebook.kernel.widget_manager === null){
+
+            return false;
+        }
+
+        // check whether notebook has already re-rendered the output cells, otherwise our changes might get overwritten
+        var cells = frame.document.getElementsByClassName("output_area");
+        if(cells.length == 0 || cells[0].getElementsByTagName("img").length == 0){
+            return false;
+        }
+
+        return true;
+    }
+
     function poll_for_jupyter_start(){
-        var notebook = document.getElementById("myFrame").contentWindow.Jupyter.notebook;
-        if(notebook && notebook._fully_loaded){
-                handle_jupyter_start();
+        if(check_jupyter_started()){
+            handle_jupyter_start();
         }else{
             setTimeout(poll_for_jupyter_start, 50);
         }
