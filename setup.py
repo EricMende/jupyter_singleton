@@ -4,7 +4,7 @@ long_description = open('README.md').read()
 
 setup(
     name='jupyter_singleton',
-    version='0.0.1',
+    version='0.1.0',
     packages=['jupyter_singleton', ],
     author='Eric Mende',
     author_email='em@bc-potsdam.de',
