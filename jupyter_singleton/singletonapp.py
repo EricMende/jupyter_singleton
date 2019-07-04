@@ -1,9 +1,11 @@
 import json
+import jupyter_singleton
 import os
 import sys
 import tempfile
 import time
 import threading
+import urllib
 import uuid
 import webbrowser
 
@@ -27,7 +29,7 @@ class SingletonApp:
         self.notebook_dir = tempfile.mkdtemp(prefix='jupyter_singleton_')
         self.browser_name = browser_name
 
-    def open_singleton(self):
+    def open_singleton(self, debug_redirect=False):
         """
         Opens a new browser-window running a single jupyter output-cell.
         After calling this function output printed via 'print' or displayed via 'IPython.display.display' will be shown
@@ -59,6 +61,17 @@ class SingletonApp:
             singleton_id
         ]
         url = ''.join(url_parts)
+
+        if debug_redirect:
+            url_parts = [
+                'file://',
+                os.path.abspath(os.path.join(os.path.abspath(jupyter_singleton.__file__), '..', 'debugredirect.html')),
+                '?',
+                'url=',
+                urllib.parse.quote(url)
+            ]
+            url = ''.join(url_parts)
+
         browser = webbrowser.get(self.browser_name)
         browser.open(url, new=1)
 

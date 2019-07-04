@@ -75,7 +75,7 @@ def _check_started():
                            "function")
 
 
-def open_singleton():
+def open_singleton(debug_redirect=False):
     """
     Open up a new browser window and load an active jupyter notebook output cell.
     This output cell can then be interacted with: e.g. with IPython.display.display(my_widget)
@@ -83,7 +83,7 @@ def open_singleton():
     """
     _check_started()
     if jupyter_singleton.singleton_app is not None:
-        jupyter_singleton.singleton_app.open_singleton()
+        jupyter_singleton.singleton_app.open_singleton(debug_redirect=debug_redirect)
 
 
 def display(widget):

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <script>
+        "use strict"
+
+        setTimeout(function(){
+            var url = new URL(location.href);
+            var redirect_url = url.searchParams.get("url");
+            location.href = redirect_url;
+        }, 5000);
+
+
+    </script>
+</body>
+</html>
