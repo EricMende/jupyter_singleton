@@ -5,7 +5,11 @@ long_description = open('README.md').read()
 setup(
     name='jupyter_singleton',
     version='0.1.0',
-    packages=['jupyter_singleton', ],
+    packages=[
+        'jupyter_singleton',
+        'jupyter_singleton/config',
+        'jupyter_singleton/direct',
+    ],
     author='Eric Mende',
     author_email='em@bc-potsdam.de',
     url='https://github.com/EricMende/jupyter_singleton',
